@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoomCalc — Weaving Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F2ED;
+    --surface: #FDFCFA;
+    --surface-2: #F0EDE6;
+    --border: #D9D4C9;
+    --border-strong: #B8B0A2;
+    --text: #1C1A17;
+    --text-muted: #6B6459;
+    --text-hint: #9C9386;
+    --accent: #B07A2C;
+    --accent-bg: #FDF3E3;
+    --accent-border: #DEB96A;
+    --danger: #9A3A2A;
+    --danger-bg: #FDF0EE;
+    --success: #2A6B4A;
+    --success-bg: #EDFAF3;
+    --yarn-colors: #4A6FA5, #8B5E3C, #5A7A5A, #8B3A5E, #5A5A8B, #8B7A3A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .app {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 0 80px;
+  }
+
+  header {
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .logo span {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .tagline {
+    font-size: 12px;
+    color: var(--text-hint);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .section {
+    padding: 20px;
+  }
+
+  .section + .section {
+    padding-top: 0;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-hint);
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .card + .card {
+    margin-top: 10px;
+  }
+
+  .global-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .field-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 9px 11px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    min-width: 0;
+  }
+
+  .field-row input:focus {
+    background: var(--accent-bg);
+  }
+
+  .field-unit {
+    padding: 9px 11px 9px 0;
+    font-size: 12px;
+    color: var(--text-hint);
+    white-space: nowrap;
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  .field-convert {
+    font-size: 11px;
+    color: var(--text-hint);
+    font-family: 'DM Mono', monospace;
+    padding: 2px 0;
+  }
+
+  .yarn-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    transition: border-color 0.15s;
+  }
+
+  .yarn-card:focus-within {
+    border-color: var(--accent-border);
+  }
+
+  .yarn-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .yarn-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .yarn-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: text;
+    min-width: 0;
+  }
+
+  .yarn-badge {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-hint);
+    padding: 2px 8px;
+    background: var(--bg);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .yarn-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-hint);
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    border-radius: 4px;
+    transition: color 0.1s, background 0.1s;
+    flex-shrink: 0;
+  }
+
+  .yarn-remove:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+  }
+
+  .yarn-body {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .yarn-body .field:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .add-yarn-btn {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s;
+  }
+
+  .add-yarn-btn:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .add-yarn-btn::before {
+    content: '+';
+    font-size: 20px;
+    line-height: 1;
+    font-weight: 300;
+  }
+
+  .calc-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--text);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--bg);
+    letter-spacing: 0.01em;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .calc-btn:hover {
+    background: #2C2A27;
+    transform: translateY(-1px);
+  }
+
+  .calc-btn:active {
+    transform: translateY(0);
+  }
+
+  .pattern-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    margin: 3px;
+    border: 1px solid;
+  }
+
+  .pattern-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pattern-arrow {
+    color: var(--text-hint);
+    font-size: 14px;
+    margin: 0 2px;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-hint);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .stat-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-hint);
+    margin-top: 2px;
+  }
+
+  .yarn-result-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .yarn-result-header {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .yarn-result-body {
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .mini-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mini-stat-label {
+    font-size: 11px;
+    color: var(--text-hint);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .mini-stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .total-card {
+    background: var(--accent-bg);
+    border: 1.5px solid var(--accent-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 10px;
+  }
+
+  .total-card .total-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .total-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .total-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .total-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 0;
+  }
+
+  .error-msg {
+    background: var(--danger-bg);
+    border: 1px solid #DDA090;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--danger);
+    margin-bottom: 10px;
+  }
+
+  #results-section {
+    display: none;
+  }
+
+  #results-section.visible {
+    display: block;
+  }
+
+  .repeats-info {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .repeats-info span {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+
+  .repeats-info .rl { color: var(--text-hint); font-size: 12px; }
+  .repeats-info .rv { color: var(--text); font-weight: 500; font-size: 15px; }
+
+  @media (max-width: 400px) {
+    .global-grid { grid-template-columns: 1fr; }
+    .yarn-body { grid-template-columns: 1fr; }
+    .yarn-body .field:last-child:nth-child(odd) { grid-column: auto; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .yarn-result-body { grid-template-columns: 1fr 1fr; }
+    .total-grid { grid-template-columns: 1fr; }
+    .total-value { font-size: 22px; }
+  }
+
+  .toggle-collapse {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-hint);
+    font-size: 14px;
+    padding: 2px;
+    line-height: 1;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-collapse.collapsed {
+    transform: rotate(-90deg);
+  }
+
+  .yarn-body.collapsed {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="logo">Loom<span>Calc</span></div>
+    </div>
+    <div class="tagline">Weaving Calculator</div>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- Global Settings -->
+  <div class="section">
+    <div class="section-title">Fabric Settings</div>
+    <div class="card">
+      <div class="global-grid">
+        <div class="field">
+          <label>Fabric Width (inches)</label>
+          <div class="field-row">
+            <input type="number" id="fabric-width" value="58" step="0.5" min="1">
+            <span class="field-unit">in</span>
+          </div>
+          <div class="field-convert" id="fabric-width-m">→ 1.47 m</div>
+        </div>
+        <div class="field">
+          <label>Wastage %</label>
+          <div class="field-row">
+            <input type="number" id="wastage" value="8" step="0.5" min="0" max="100">
+            <span class="field-unit">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yarns -->
+  <div class="section">
+    <div class="section-title">Yarn Configuration</div>
+    <div id="yarns-container"></div>
+    <button class="add-yarn-btn" onclick="addYarn()">Add Yarn</button>
+  </div>
+
+  <!-- Calculate -->
+  <div class="section">
+    <button class="calc-btn" onclick="calculate()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M4 8h8M8 4v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Calculate
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div class="section" id="results-section">
+    <div class="section-title">Results — per meter of fabric</div>
+
+    <div id="error-container"></div>
+
+    <div id="pattern-display" class="pattern-section"></div>
+
+    <div class="repeats-info" id="repeats-info"></div>
+
+    <div id="yarn-results"></div>
+
+    <div class="total-card" id="total-card">
+      <div class="total-title">Total per meter</div>
+      <div class="total-grid" id="total-grid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const INCH_PER_METER = 39.37;
+const YARN_COLORS = ['#4A6FA5','#8B5E3C','#5A7A5A','#8B3A5E','#5A5A8B','#B07A2C','#6B4A8B','#3A7A7A'];
+const YARN_BG = ['#EEF4FB','#F9F2EC','#EEF4EE','#F9EEEF','#EEEEF9','#FDF3E3','#F4EEF9','#EEF9F9'];
+
+let yarnCount = 0;
+let yarns = [];
+
+function addYarn(opts = {}) {
+  const id = ++yarnCount;
+  const colorIdx = (yarns.length) % YARN_COLORS.length;
+  const yarn = {
+    id,
+    colorIdx,
+    name: opts.name || `Yarn ${id}`,
+    denier: opts.denier ?? '',
+    rate: opts.rate ?? '',
+    density: opts.density ?? '',
+    picks: opts.picks ?? '',
+  };
+  yarns.push(yarn);
+  renderYarns();
+  return yarn;
+}
+
+function removeYarn(id) {
+  yarns = yarns.filter(y => y.id !== id);
+  renderYarns();
+}
+
+function getYarnById(id) {
+  return yarns.find(y => y.id === id);
+}
+
+function syncYarnFromDOM(id) {
+  const y = getYarnById(id);
+  if (!y) return;
+  y.name = document.getElementById(`y-name-${id}`)?.value || y.name;
+  y.denier = parseFloat(document.getElementById(`y-denier-${id}`)?.value) || 0;
+  y.rate = parseFloat(document.getElementById(`y-rate-${id}`)?.value) || 0;
+  y.density = parseFloat(document.getElementById(`y-density-${id}`)?.value) || 0;
+  y.picks = parseFloat(document.getElementById(`y-picks-${id}`)?.value) || 0;
+}
+
+function toggleYarnBody(id) {
+  const body = document.getElementById(`y-body-${id}`);
+  const btn = document.getElementById(`y-toggle-${id}`);
+  if (!body || !btn) return;
+  body.classList.toggle('collapsed');
+  btn.classList.toggle('collapsed');
+}
+
+function renderYarnCard(y) {
+  const color = YARN_COLORS[y.colorIdx];
+  const bgColor = YARN_BG[y.colorIdx];
+  const repeatSize = (y.picks && y.density) ? (y.picks / y.density).toFixed(3) + ' in' : '—';
+  return `
+    <div class="yarn-card" id="yarn-card-${y.id}">
+      <div class="yarn-header" onclick="toggleYarnBody(${y.id})">
+        <button class="toggle-collapse" id="y-toggle-${y.id}">▾</button>
+        <div class="yarn-dot" style="background:${color}"></div>
+        <input class="yarn-name-input" id="y-name-${y.id}" value="${escH(y.name)}" onclick="event.stopPropagation()" oninput="syncYarnName(${y.id})">
+        <span class="yarn-badge" id="y-badge-${y.id}">${y.picks && y.density ? (y.picks/y.density).toFixed(2)+' in/rep' : 'configure'}</span>
+        ${yarns.length > 1 ? `<button class="yarn-remove" onclick="event.stopPropagation(); removeYarn(${y.id})" title="Remove">×</button>` : ''}
+      </div>
+      <div class="yarn-body" id="y-body-${y.id}">
+        <div class="field">
+          <label>Denier</label>
+          <div class="field-row">
+            <input type="number" id="y-denier-${y.id}" value="${y.denier||''}" min="1" step="1" placeholder="e.g. 90" oninput="onYarnInput(${y.id})">
+            <span class="field-unit">D</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Rate (₹/kg)</label>
+          <div class="field-row">
+            <input type="number" id="y-rate-${y.id}" value="${y.rate||''}" min="0" step="1" placeholder="e.g. 793" oninput="onYarnInput(${y.id})">
+            <span class="field-unit">₹</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Density (picks/inch)</label>
+          <div class="field-row">
+            <input type="number" id="y-density-${y.id}" value="${y.density||''}" min="1" step="1" placeholder="e.g. 60" oninput="onYarnInput(${y.id})">
+            <span class="field-unit">ppi</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Picks per repeat</label>
+          <div class="field-row">
+            <input type="number" id="y-picks-${y.id}" value="${y.picks||''}" min="1" step="1" placeholder="e.g. 30" oninput="onYarnInput(${y.id})">
+            <span class="field-unit">pk</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderYarns() {
+  const container = document.getElementById('yarns-container');
+  container.innerHTML = yarns.map(renderYarnCard).join('');
+}
+
+function syncYarnName(id) {
+  const y = getYarnById(id);
+  if (y) y.name = document.getElementById(`y-name-${id}`)?.value || y.name;
+}
+
+function onYarnInput(id) {
+  syncYarnFromDOM(id);
+  const y = getYarnById(id);
+  if (!y) return;
+  const badge = document.getElementById(`y-badge-${id}`);
+  if (badge) {
+    badge.textContent = (y.picks && y.density)
+      ? (y.picks / y.density).toFixed(2) + ' in/rep'
+      : 'configure';
+  }
+}
+
+function getFabricWidth() {
+  const inches = parseFloat(document.getElementById('fabric-width').value) || 0;
+  return (inches * 2.54) / 100;
+}
+
+function getWastage() {
+  return (parseFloat(document.getElementById('wastage').value) || 0) / 100;
+}
+
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function calculate() {
+  yarns.forEach(y => syncYarnFromDOM(y.id));
+
+  const errorContainer = document.getElementById('error-container');
+  errorContainer.innerHTML = '';
+
+  const fabricWidth = getFabricWidth();
+  const wastage = getWastage();
+
+  const errors = [];
+  if (!fabricWidth) errors.push('Enter a valid fabric width.');
+  yarns.forEach(y => {
+    if (!y.denier) errors.push(`${y.name}: Denier is required.`);
+    if (!y.density) errors.push(`${y.name}: Density is required.`);
+    if (!y.picks) errors.push(`${y.name}: Picks per repeat is required.`);
+  });
+
+  if (errors.length) {
+    errorContainer.innerHTML = errors.map(e => `<div class="error-msg">${e}</div>`).join('');
+    document.getElementById('results-section').classList.add('visible');
+    document.getElementById('pattern-display').innerHTML = '';
+    document.getElementById('repeats-info').innerHTML = '';
+    document.getElementById('yarn-results').innerHTML = '';
+    document.getElementById('total-card').style.display = 'none';
+    return;
+  }
+
+  // Core calculation
+  const totalRepeatInch = yarns.reduce((s, y) => s + (y.picks / y.density), 0);
+  const repeatPerMeter = INCH_PER_METER / totalRepeatInch;
+
+  const results = yarns.map(y => {
+    const repeatInch = y.picks / y.density;
+    const picksPerMeter = repeatPerMeter * y.picks;
+    const consumedKg = (fabricWidth * y.denier * picksPerMeter * (1 + wastage)) / 9000000;
+    const consumedG = consumedKg * 1000;
+    const cost = consumedKg * y.rate;
+    return { ...y, repeatInch, picksPerMeter, consumedKg, consumedG, cost };
+  });
+
+  const totalG = results.reduce((s, r) => s + r.consumedG, 0);
+  const totalCost = results.reduce((s, r) => s + r.cost, 0);
+  const hasCost = results.some(r => r.rate > 0);
+
+  // Pattern display
+  const patternDisplay = document.getElementById('pattern-display');
+  const pills = results.map((r, i) => {
+    const c = YARN_COLORS[r.colorIdx];
+    const bg = YARN_BG[r.colorIdx];
+    return `<span class="pattern-pill" style="background:${bg};border-color:${c};color:${c}">`
+         + `<span style="font-size:10px">●</span>${escH(r.name)} × ${r.picks}</span>`;
+  });
+  patternDisplay.innerHTML = pills.join(`<span class="pattern-arrow">→</span>`) +
+    `<span class="pattern-arrow">↺ repeat</span>`;
+
+  // Repeats info
+  document.getElementById('repeats-info').innerHTML = `
+    <span class="rl">Total repeat size</span>
+    <span class="rv">${totalRepeatInch.toFixed(3)} in</span>
+    <span class="rl" style="margin-left:12px">Repeats / metre</span>
+    <span class="rv">${repeatPerMeter.toFixed(2)}</span>
+    <span class="rl" style="margin-left:12px">Fabric width</span>
+    <span class="rv">${(fabricWidth*100).toFixed(1)} cm</span>
+  `;
+
+  // Yarn results
+  const yarnResults = document.getElementById('yarn-results');
+  yarnResults.innerHTML = results.map(r => {
+    const c = YARN_COLORS[r.colorIdx];
+    const bg = YARN_BG[r.colorIdx];
+    return `
+      <div class="yarn-result-card">
+        <div class="yarn-result-header" style="background:${bg}">
+          <div class="yarn-dot" style="background:${c}"></div>
+          <span style="color:${c}">${escH(r.name)}</span>
+          <span style="color:#9C9386;font-weight:400;font-size:12px;margin-left:4px">${r.denier}D · ${r.density}ppi · ${r.picks}pk/rep</span>
+        </div>
+        <div class="yarn-result-body">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Picks/m</div>
+            <div class="mini-stat-value">${r.picksPerMeter.toFixed(0)}</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Consumed</div>
+            <div class="mini-stat-value">${r.consumedG.toFixed(2)} g</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">${r.rate ? 'Cost' : 'Rate'}</div>
+            <div class="mini-stat-value">${r.rate ? '₹' + r.cost.toFixed(2) : '—'}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Total
+  const totalCard = document.getElementById('total-card');
+  totalCard.style.display = '';
+  document.getElementById('total-grid').innerHTML = `
+    <div>
+      <div class="total-value">${totalG.toFixed(2)} g</div>
+      <div class="total-label">Total yarn per metre</div>
+    </div>
+    ${hasCost ? `<div>
+      <div class="total-value">₹${totalCost.toFixed(2)}</div>
+      <div class="total-label">Total cost per metre</div>
+    </div>` : `<div>
+      <div class="total-value" style="font-size:16px;color:var(--text-hint)">Add rates for cost</div>
+      <div class="total-label">Yarn rates not set</div>
+    </div>`}
+  `;
+
+  document.getElementById('results-section').classList.add('visible');
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Live update fabric width conversion
+document.getElementById('fabric-width').addEventListener('input', function() {
+  const m = (parseFloat(this.value) * 2.54 / 100) || 0;
+  document.getElementById('fabric-width-m').textContent = '→ ' + m.toFixed(4) + ' m';
+});
+
+// Init with 2 yarns matching the example
+window.onload = function() {
+  addYarn({ name: 'Yarn 1', denier: 90, rate: 793, density: 60, picks: 30 });
+  addYarn({ name: 'Yarn 2', denier: 11, rate: 783, density: 100, picks: 60 });
+  // trigger badge updates
+  [1,2].forEach(id => onYarnInput(id));
+};
+</script>
+</body>
+</html>
