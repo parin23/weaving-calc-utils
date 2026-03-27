@@ -125,6 +125,7 @@
     color: var(--text-muted);
     font-weight: 400;
     letter-spacing: 0.02em;
+    word-break: break-word;
   }
 
   .field-row {
@@ -147,6 +148,9 @@
     font-size: 14px;
     color: var(--text);
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .field-row input:focus {
@@ -500,7 +504,7 @@
   .repeats-info .rl { color: var(--text-hint); font-size: 12px; }
   .repeats-info .rv { color: var(--text); font-weight: 500; font-size: 15px; }
 
-  @media (max-width: 400px) {
+  @media (max-width: 480px) {
     .global-grid { grid-template-columns: 1fr; }
     .yarn-body { grid-template-columns: 1fr; }
     .yarn-body .field:last-child:nth-child(odd) { grid-column: auto; }
@@ -508,6 +512,9 @@
     .yarn-result-body { grid-template-columns: 1fr 1fr; }
     .total-grid { grid-template-columns: 1fr; }
     .total-value { font-size: 22px; }
+    .tabs { margin: 0 12px 16px; }
+    .section { padding: 16px; }
+    .field-row { min-width: 0; }
   }
 
   .toggle-collapse {
@@ -529,6 +536,48 @@
   .yarn-body.collapsed {
     display: none;
   }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin: 0 20px 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+
+  .tab:hover {
+    color: var(--text);
+  }
+
+  .tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
 </style>
 </head>
 <body>
@@ -542,7 +591,12 @@
   </div>
 </header>
 
-<div class="app">
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('weft')">Weft</button>
+  <button class="tab" onclick="switchTab('warp')">Warp</button>
+</div>
+
+<div class="app tab-panel active" id="weft-panel">
 
   <!-- Global Settings -->
   <div class="section">
@@ -601,6 +655,64 @@
     </div>
   </div>
 
+</div>
+
+<div class="tab-panel" id="warp-panel">
+  <div class="section">
+    <div class="section-title">Warp Yarn Configuration</div>
+    <div class="card">
+      <div class="global-grid">
+        <div class="field">
+          <label>Warp Denier</label>
+          <div class="field-row">
+            <input type="number" id="warp-denier" value="38" min="1" step="1">
+            <span class="field-unit">D</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Total Ends</label>
+          <div class="field-row">
+            <input type="number" id="warp-ends" value="10180" min="1" step="1">
+            <span class="field-unit">ends</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Warp Length (yards)</label>
+          <div class="field-row">
+            <input type="number" id="warp-length" value="100" min="1" step="1">
+            <span class="field-unit">yd</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Rate (₹/kg)</label>
+          <div class="field-row">
+            <input type="number" id="warp-rate" value="255" min="0" step="1">
+            <span class="field-unit">₹</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Wastage %</label>
+          <div class="field-row">
+            <input type="number" id="warp-wastage" value="10" step="0.5" min="0" max="100">
+            <span class="field-unit">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="calc-btn" onclick="calculateWarp()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M4 8h8M8 4v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Calculate
+    </button>
+  </div>
+
+  <div class="section" id="warp-results-section">
+    <div class="section-title">Results — Warp</div>
+    <div id="warp-error-container"></div>
+    <div id="warp-results"></div>
+  </div>
 </div>
 
 <script>
@@ -849,6 +961,61 @@ function calculate() {
 
   document.getElementById('results-section').classList.add('visible');
   document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Tab switching
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`${tab}-panel`).classList.add('active');
+}
+
+// Warp calculation
+function calculateWarp() {
+  const errorContainer = document.getElementById('warp-error-container');
+  errorContainer.innerHTML = '';
+
+  const wastage = (parseFloat(document.getElementById('warp-wastage').value) || 0) / 100;
+  const warpDenier = parseFloat(document.getElementById('warp-denier').value) || 0;
+  const warpEnds = parseFloat(document.getElementById('warp-ends').value) || 0;
+  const warpLength = parseFloat(document.getElementById('warp-length').value) || 0;
+  const warpRate = parseFloat(document.getElementById('warp-rate').value) || 0;
+
+  const errors = [];
+  if (!warpDenier) errors.push('Warp Denier is required.');
+  if (!warpEnds) errors.push('Total Ends is required.');
+  if (!warpLength) errors.push('Warp Length is required.');
+
+  if (errors.length) {
+    errorContainer.innerHTML = errors.map(e => `<div class="error-msg">${e}</div>`).join('');
+    return;
+  }
+
+  const totalKg = (warpEnds * warpDenier * warpLength * (1 + wastage)) / 9000000;
+  const totalG = totalKg * 1000;
+  const cost = totalKg * warpRate;
+
+  document.getElementById('warp-results').innerHTML = `
+    <div class="results-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Length</div>
+        <div class="stat-value">${warpLength.toFixed(0)}</div>
+        <div class="stat-sub">yards</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Warp Yarn Used</div>
+        <div class="stat-value">${totalG.toFixed(2)}</div>
+        <div class="stat-sub">grams</div>
+      </div>
+      ${warpRate ? `<div class="stat-card">
+        <div class="stat-label">Warp Cost</div>
+        <div class="stat-value">₹${cost.toFixed(2)}</div>
+      </div>` : ''}
+    </div>
+  `;
+
+  document.getElementById('warp-results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Live update fabric width conversion
