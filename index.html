@@ -570,7 +570,7 @@
 
   <!-- Yarns -->
   <div class="section">
-    <div class="section-title">Yarn Configuration</div>
+    <div class="section-title">Weft Yarn Configuration</div>
     <div id="yarns-container"></div>
     <button class="add-yarn-btn" onclick="addYarn()">Add Yarn</button>
   </div>
@@ -617,7 +617,7 @@ function addYarn(opts = {}) {
   const yarn = {
     id,
     colorIdx,
-    name: opts.name || `Yarn ${id}`,
+    name: opts.name || `Weft ${id}`,
     denier: opts.denier ?? '',
     rate: opts.rate ?? '',
     density: opts.density ?? '',
@@ -664,7 +664,7 @@ function renderYarnCard(y) {
       <div class="yarn-header" onclick="toggleYarnBody(${y.id})">
         <button class="toggle-collapse" id="y-toggle-${y.id}">▾</button>
         <div class="yarn-dot" style="background:${color}"></div>
-        <input class="yarn-name-input" id="y-name-${y.id}" value="${escH(y.name)}" onclick="event.stopPropagation()" oninput="syncYarnName(${y.id})">
+        <input class="yarn-name-input" id="y-name-${y.id}" value="${escH(y.name)}" placeholder="e.g. Yarn 1 20 Mono" onclick="event.stopPropagation()" oninput="syncYarnName(${y.id})">
         <span class="yarn-badge" id="y-badge-${y.id}">${y.picks && y.density ? (y.picks/y.density).toFixed(2)+' in/rep' : 'configure'}</span>
         ${yarns.length > 1 ? `<button class="yarn-remove" onclick="event.stopPropagation(); removeYarn(${y.id})" title="Remove">×</button>` : ''}
       </div>
@@ -857,10 +857,10 @@ document.getElementById('fabric-width').addEventListener('input', function() {
   document.getElementById('fabric-width-m').textContent = '→ ' + m.toFixed(4) + ' m';
 });
 
-// Init with 2 yarns matching the example
+// Init with 2 weft yarns matching the example
 window.onload = function() {
-  addYarn({ name: 'Yarn 1', denier: 90, rate: 793, density: 60, picks: 30 });
-  addYarn({ name: 'Yarn 2', denier: 11, rate: 783, density: 100, picks: 60 });
+  addYarn({ name: 'Weft 1', denier: 90, rate: 793, density: 60, picks: 30 });
+  addYarn({ name: 'Weft 2', denier: 11, rate: 783, density: 100, picks: 60 });
   // trigger badge updates
   [1,2].forEach(id => onYarnInput(id));
 };
